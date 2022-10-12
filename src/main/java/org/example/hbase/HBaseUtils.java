@@ -103,6 +103,7 @@ public class HBaseUtils {
      * @param value            数据
      */
     public static boolean putRow(String tableName, String rowKey, String columnFamilyName, String qualifier, String value) {
+        System.out.println("putRow now <<");
         try {
             Table table = connection.getTable(TableName.valueOf(tableName));
             Put put = new Put(Bytes.toBytes(rowKey));
@@ -112,6 +113,7 @@ public class HBaseUtils {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.println("putRow end <<");
         return true;
     }
 
