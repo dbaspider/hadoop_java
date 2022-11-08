@@ -7,23 +7,28 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.filter.FilterList;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
 
 public class HBaseUtils {
 
+    private static final Logger logger = LoggerFactory.getLogger(HBaseUtils.class);
+
     private static Connection connection;
 
     static {
-        System.out.println("createConnection begin");
+        logger.info("createConnection begin");
         Configuration configuration = HBaseConfiguration.create();
         configuration.set("hbase.zookeeper.property.clientPort", "2181");
         // 如果是集群 则主机名用逗号分隔
-        configuration.set("hbase.zookeeper.quorum", "hadoop01"); //192.168.182.129
+        configuration.set("hbase.zookeeper.quorum", "hadoop01"); // add hosts 192.168.75.128 hadoop01
+        //configuration.set("hbase.zookeeper.quorum", "192.168.75.128");
         try {
             connection = ConnectionFactory.createConnection(configuration);
-            System.out.println("createConnection ok");
+            logger.info("createConnection ok");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -35,11 +40,30 @@ public class HBaseUtils {
      * @throws IOException
      */
     public static boolean closeConnection() throws IOException {
-        System.out.println("closeConnection now");
+        logger.info("closeConnection now");
         if (connection != null) {
             connection.close();
         }
         return true;
+    }
+
+    public static boolean existsTable(String tableName) {
+        logger.info("existsTable: " + tableName);
+        try {
+            logger.info("getAdmin >>");
+            HBaseAdmin admin = (HBaseAdmin) connection.getAdmin();
+            logger.info("getAdmin <<");
+            logger.info("tableExists >>");
+            if (admin.tableExists(TableName.valueOf(tableName))) {
+                logger.info("tableExists << 1");
+                return true;
+            }
+            logger.info("tableExists << 2");
+            return false;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return false;
     }
 
     /**
@@ -49,16 +73,8 @@ public class HBaseUtils {
      * @param columnFamilies 列族的数组
      */
     public static boolean createTable(String tableName, List<String> columnFamilies) {
-        System.out.println("createTable now");
+        logger.info("createTable {}", tableName);
         try {
-            System.out.println("createTable now 111");
-            HBaseAdmin admin = (HBaseAdmin) connection.getAdmin();
-            System.out.println("createTable now tableExists");
-            if (admin.tableExists(TableName.valueOf(tableName))) {
-                System.out.println("createTable now tableExists true");
-                return false;
-            }
-            System.out.println("createTable now 222");
             TableDescriptorBuilder tableDescriptor = TableDescriptorBuilder.newBuilder(TableName.valueOf(tableName));
             columnFamilies.forEach(columnFamily -> {
                 ColumnFamilyDescriptorBuilder cfDescriptorBuilder = ColumnFamilyDescriptorBuilder.newBuilder(Bytes.toBytes(columnFamily));
@@ -66,9 +82,10 @@ public class HBaseUtils {
                 ColumnFamilyDescriptor familyDescriptor = cfDescriptorBuilder.build();
                 tableDescriptor.setColumnFamily(familyDescriptor);
             });
-            System.out.println("createTable now >>");
+            logger.info("createTable now >>");
+            HBaseAdmin admin = (HBaseAdmin) connection.getAdmin();
             admin.createTable(tableDescriptor.build());
-            System.out.println("createTable now <<");
+            logger.info("createTable now <<");
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -103,7 +120,7 @@ public class HBaseUtils {
      * @param value            数据
      */
     public static boolean putRow(String tableName, String rowKey, String columnFamilyName, String qualifier, String value) {
-        System.out.println("putRow now <<");
+        logger.info("putRow now <<");
         try {
             Table table = connection.getTable(TableName.valueOf(tableName));
             Put put = new Put(Bytes.toBytes(rowKey));
@@ -113,7 +130,7 @@ public class HBaseUtils {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("putRow end <<");
+        logger.info("putRow end <<");
         return true;
     }
 
