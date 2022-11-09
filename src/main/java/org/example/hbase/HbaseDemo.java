@@ -1,40 +1,47 @@
 package org.example.hbase;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class HbaseDemo {
 
+    private static final Logger logger = LoggerFactory.getLogger(HbaseDemo.class);
+
     public static void main(String[] args) throws IOException {
-        System.out.println("Hbase op begin");
+        logger.info("Hbase op begin");
 
         List<String> cfList = new ArrayList<>();
         cfList.add("cf1");
         cfList.add("cf2");
 
-        boolean ret1 = HBaseUtils.existsTable("tab_emp");
+        HBaseUtilsOrg.createConnection();
+
+        boolean ret1 = HBaseUtilsOrg.existsTable("tab_stu");
         if (ret1) {
-            System.out.println("Table exists");
+            logger.info("Table already exists");
         } else {
-            System.out.println("Table not exists");
-            boolean ret = HBaseUtils.createTable("tab_emp", cfList);
+            logger.info("Table not exists, will create it");
+            boolean ret = HBaseUtilsOrg.createTable("tab_stu", cfList);
             if (ret) {
-                System.out.println("createTable success");
+                logger.info("create Table success");
             } else {
-                System.out.println("createTable failed");
+                logger.info("create Table failed");
             }
         }
 
-//        boolean added1 = HBaseUtils.putRow("tab_emp", "1001", "cf1", "name", "king");
-//        boolean added2 = HBaseUtils.putRow("tab_emp", "1002", "cf1", "name", "jack");
-//        boolean added3 = HBaseUtils.putRow("tab_emp", "1002", "cf1", "age", "22");
-//        boolean added4 = HBaseUtils.putRow("tab_emp", "1002", "cf2", "school", "Mid 101");
+//        boolean added1 = HBaseUtilsOrg.putRow("tab_emp", "1001", "cf1", "name", "king");
+//        boolean added2 = HBaseUtilsOrg.putRow("tab_emp", "1002", "cf1", "name", "jack");
+//        boolean added3 = HBaseUtilsOrg.putRow("tab_emp", "1002", "cf1", "age", "22");
+//        boolean added4 = HBaseUtilsOrg.putRow("tab_emp", "1002", "cf2", "school", "Mid 101");
 //
 //        System.out.println("putRow: " + added1 + " " + added2 + " " + added3 + " " + added4);
 
-        HBaseUtils.closeConnection();
+        HBaseUtilsOrg.closeConnection();
 
-        System.out.println("Hbase op finish");
+        logger.info("Hbase op finish");
     }
 }

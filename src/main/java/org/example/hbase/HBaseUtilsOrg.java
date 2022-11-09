@@ -13,13 +13,28 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.List;
 
-public class HBaseUtils {
+public class HBaseUtilsOrg {
 
-    private static final Logger logger = LoggerFactory.getLogger(HBaseUtils.class);
+    private static final Logger logger = LoggerFactory.getLogger(HBaseUtilsOrg.class);
 
     private static Connection connection;
 
-    static {
+//    static {
+//        logger.info("createConnection begin");
+//        Configuration configuration = HBaseConfiguration.create();
+//        configuration.set("hbase.zookeeper.property.clientPort", "2181");
+//        // 如果是集群 则主机名用逗号分隔
+//        configuration.set("hbase.zookeeper.quorum", "hadoop01"); // add hosts 192.168.75.128 hadoop01
+//        //configuration.set("hbase.zookeeper.quorum", "192.168.75.128");
+//        try {
+//            connection = ConnectionFactory.createConnection(configuration);
+//            logger.info("createConnection ok");
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+//    }
+
+    public static void createConnection() {
         logger.info("createConnection begin");
         Configuration configuration = HBaseConfiguration.create();
         configuration.set("hbase.zookeeper.property.clientPort", "2181");
@@ -55,10 +70,10 @@ public class HBaseUtils {
             logger.info("getAdmin <<");
             logger.info("tableExists >>");
             if (admin.tableExists(TableName.valueOf(tableName))) {
-                logger.info("tableExists << 1");
+                logger.info("tableExists true");
                 return true;
             }
-            logger.info("tableExists << 2");
+            logger.info("tableExists false");
             return false;
         } catch (IOException e) {
             e.printStackTrace();
