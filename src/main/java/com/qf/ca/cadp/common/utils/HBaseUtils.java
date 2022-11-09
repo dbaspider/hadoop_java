@@ -1,8 +1,7 @@
-package org.example.hbase.flight;
+package com.qf.ca.cadp.common.utils;
 
 import com.qf.ca.cadp.common.pojo.model.PlaneDetail;
 import com.qf.ca.cadp.common.pojo.response.PlaneDetailResponse;
-import com.qf.ca.cadp.common.utils.BaseUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
