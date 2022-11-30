@@ -40,20 +40,24 @@ public class FlightQar {
     public static void main(String[] args) throws IOException {
         logger.info("FlightQar begin");
 
-        String planeNumber = "B1645";
         String zkUrl = "hadoop01:2181";
         String zkPort = "2181";
-        String tableName = "qar_success";
+        String tableName = "qar_success3";
         String colFamily = "cf1";
 
         //rowCountByScanFilter(zkUrl, zkPort, tableName);
         // 每秒1行，这里取10行
-        long start = 1660712526000L; // time = 1660712526000 key = 5461B 开始
-        long end   = 1660712535000L; // time = 1660724174000 key = 5461B 结束
+//        long start = 1660712526000L; // time = 1660712526000 key = 5461B 开始
+//        long end   = 1660712535000L; // time = 1660724174000 key = 5461B 结束
+//        String planeNumber = "B1645";
+
+        long start = 1660693394000L; 	// time = 1660693394000
+        long end   = start + 20 * 1000; // time = 1660701438000
+        String planeNumber = "B1870";
 
         PlaneDetailResponse resp = queryHbase(start, end, zkUrl, zkPort, tableName, colFamily, planeNumber);
 
-        logger.info("resp = " + resp);
+        //logger.info("resp = " + resp);
         logger.info("FlightQar end");
     }
 
@@ -74,13 +78,13 @@ public class FlightQar {
         ResultScanner results = mutiRowBase(zookeeperIp, zookeeperPort, hbaseTable, startRow, endRow);
         int rows = 0;
         for (Result r : results) {
-//            long time = HBaseUtils.bytes2ResolutionKey(r.getRow())._2;
-//            String key = HBaseUtils.bytes2ResolutionKey(r.getRow())._1;
+            long time = HBaseUtils.bytes2ResolutionKey(r.getRow())._2;
+            String key1 = HBaseUtils.bytes2ResolutionKey(r.getRow())._1;
             rows++;
-//            for (Cell cell : r.rawCells()) {
-//                String cf = Bytes.toString(CellUtil.cloneFamily(cell));
-//                logger.info("time = " + time + " key = " + key + " cf = " + cf);
-//            }
+            for (Cell cell : r.rawCells()) {
+                String cf = Bytes.toString(CellUtil.cloneFamily(cell));
+                logger.info("time = " + time + " key = " + key1 + " cf = " + cf);
+            }
 
             PlaneDetail planeDetail = new PlaneDetail();
             planeDetail.setTime(HBaseUtils.bytes2ResolutionKey(r.getRow())._2);
@@ -193,8 +197,7 @@ public class FlightQar {
         }
         GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(compressed));
         BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(gis, "utf-8"));
-        String str = bufferedReader.lines().collect(Collectors.joining());
         // 使用指定的 charsetName，通过解码字节将缓冲区内容转换为字符串
-        return str;
+        return bufferedReader.lines().collect(Collectors.joining());
     }
 }

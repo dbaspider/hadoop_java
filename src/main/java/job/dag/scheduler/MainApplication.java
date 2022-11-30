@@ -25,7 +25,7 @@ public class MainApplication {
         process.addEdge(task6, task2);
         process.addEdge(task2, task3);
         process.addEdge(task2, task4);
-        process.addEdge(task4, task2); // error !!!
+        //process.addEdge(task4, task2); // error !!!
 
         // 创建调度器,执行DAG调度
         Scheduler scheduler = new Scheduler();
