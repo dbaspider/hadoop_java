@@ -23,8 +23,10 @@ import scala.Tuple3;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -36,6 +38,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * hbase的rowkey转换工具
@@ -420,14 +423,68 @@ public class HBaseUtils {
         return planeDetailResponse;
     }
 
+	public static byte[] compress(String str) throws IOException {
+		if (null == str || str.length() <= 0) {
+			return null;
+		}
+		// 创建一个新的输出流
+		ByteArrayOutputStream out = new ByteArrayOutputStream();
+		// 使用默认缓冲区大小创建新的输出流
+		GZIPOutputStream gzip = new GZIPOutputStream(out);
+		// 将字节写入此输出流
+		// 因为后台默认字符集有可能是GBK字符集，所以此处需指定一个字符集
+		gzip.write(str.getBytes(StandardCharsets.UTF_8));
+		gzip.close();
+		// 使用指定的 charsetName，通过解码字节将缓冲区内容转换为字符串
+		return out.toByteArray();
+	}
 
     public static String unCompress(byte[] compressed) throws IOException {
         if (ArrayUtils.isEmpty(compressed)) {
             return null;
         }
         GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(compressed));
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(gis, "utf-8"));
-        String str = bufferedReader.lines().collect(Collectors.joining());
-        return str;
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(gis, StandardCharsets.UTF_8));
+		return bufferedReader.lines().collect(Collectors.joining());
     }
+
+	public static String getHbaseRow(String planeNumber, Long start, Long end, String keyName, String colFam, String colName, String zookeeperIp, String zookeeperPort, String hbaseTable) {
+		String param = "";
+		byte[] rowkey = Bytes.toBytes(planeNumber + "_" + start + "_" + end + "_" + keyName);
+		Result result = rowBase(zookeeperIp, zookeeperPort, hbaseTable, rowkey);
+		param = Bytes.toString(result.getValue(Bytes.toBytes(colFam), Bytes.toBytes(colName)));
+		return param;
+	}
+
+	/**
+	 * query row base
+	 *
+	 * @param zookeeperIp
+	 * @param zookeeperPort
+	 * @param hbaseTable
+	 * @param rowkey
+	 * @return
+	 */
+	private static Result rowBase(String zookeeperIp, String zookeeperPort, String hbaseTable, byte[] rowkey) {
+		Connection connection = null;
+		Table myTable = null;
+		Result result = null;
+		try {
+			connection = HBaseUtils.getConnection(zookeeperIp, zookeeperPort);
+			myTable = connection.getTable(TableName.valueOf(hbaseTable));
+			Get get = new Get(rowkey);
+			result = myTable.get(get);
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			try {
+				if (myTable != null) {
+					myTable.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		return result;
+	}
 }
