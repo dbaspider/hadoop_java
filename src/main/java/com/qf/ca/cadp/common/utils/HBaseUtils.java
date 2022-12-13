@@ -487,4 +487,41 @@ public class HBaseUtils {
 		}
 		return result;
 	}
+
+    /**
+     * query many row base
+     *
+     * @param zookeeperIp String
+     * @param zookeeperPort String
+     * @param hbaseTable String
+     * @param startRowkey byte[]
+     * @param endRowkey byte[]
+     * @return ResultScanner
+     */
+    public static ResultScanner multiRowBase(String zookeeperIp, String zookeeperPort, String hbaseTable, byte[] startRowkey, byte[] endRowkey) {
+        logger.info("multiRowBase: {} {} {}", zookeeperIp, zookeeperPort, hbaseTable);
+        Connection connection = null;
+        Table myTable = null;
+        ResultScanner results = null;
+        try {
+            connection = HBaseUtils.getConnection(zookeeperIp, zookeeperPort);
+            myTable = connection.getTable(TableName.valueOf(hbaseTable));
+            Scan scan = new Scan();
+            scan.withStartRow(startRowkey);
+            scan.withStopRow(endRowkey);
+            results = myTable.getScanner(scan);
+        } catch (IOException e) {
+            logger.error("multiRowBase IOException: {}", e.getMessage());
+            e.printStackTrace();
+        } finally {
+            try {
+                if (myTable != null) {
+                    myTable.close();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return results;
+    }
 }

@@ -51,13 +51,23 @@ public class FlightQar {
 //        long end   = 1660712535000L; // time = 1660724174000 key = 5461B 结束
 //        String planeNumber = "B1645";
 
-        long start = 1660693394000L; 	// time = 1660693394000
-        long end   = start + 20 * 1000; // time = 1660701438000
+        // B1870 _ 1660693394000 _ 1660701438000 _timePoint
+        long startTime = 1660693394000L; 	// time = 1660693394000
+        long endTime   = 1660701438000L; // time = 1660701438000
         String planeNumber = "B1870";
 
-        PlaneDetailResponse resp = queryHbase(start, end, zkUrl, zkPort, tableName, colFamily, planeNumber);
+        long cycleCount = (endTime - startTime) / 1000 / 1000 + 1;
+        for (int i = 0; i < cycleCount; i++) {
+            long tempStart = startTime + i * 1000 * 1000;
+            long tempEnd = startTime + i * 1000 * 1000 + 999 * 1000;
+            if (i == cycleCount - 1) {
+                tempEnd = endTime;
+            }
+            long finalTempEnd = tempEnd + 1;
+            PlaneDetailResponse resp = queryHbase(tempStart, finalTempEnd, zkUrl, zkPort, tableName, colFamily, planeNumber);
 
-        //logger.info("resp = " + resp);
+            logger.info("resp = {} - {} / {}", tempStart, finalTempEnd, resp.getDetails().size());
+        }
         logger.info("FlightQar end");
     }
 
@@ -81,10 +91,10 @@ public class FlightQar {
             long time = HBaseUtils.bytes2ResolutionKey(r.getRow())._2;
             String key1 = HBaseUtils.bytes2ResolutionKey(r.getRow())._1;
             rows++;
-            for (Cell cell : r.rawCells()) {
-                String cf = Bytes.toString(CellUtil.cloneFamily(cell));
-                logger.info("time = " + time + " key = " + key1 + " cf = " + cf);
-            }
+//            for (Cell cell : r.rawCells()) {
+//                String cf = Bytes.toString(CellUtil.cloneFamily(cell));
+//                logger.info("time = " + time + " key = " + key1 + " cf = " + cf);
+//            }
 
             PlaneDetail planeDetail = new PlaneDetail();
             planeDetail.setTime(HBaseUtils.bytes2ResolutionKey(r.getRow())._2);
