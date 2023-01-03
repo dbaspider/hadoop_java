@@ -1,5 +1,6 @@
 package com.qf.ca.cadp.flight;
 
+import com.alibaba.fastjson.JSON;
 import com.qf.ca.cadp.common.pojo.model.PlaneDetail;
 import com.qf.ca.cadp.common.pojo.response.PlaneDetailResponse;
 import com.qf.ca.cadp.common.utils.BaseUtils;
@@ -17,6 +18,10 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.lucene.util.RamUsageEstimator;
+import org.example.utils.FileUtil;
+import org.github.jamm.MemoryMeter;
+import org.openjdk.jol.vm.VM;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,6 +29,7 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Set;
@@ -52,10 +58,20 @@ public class FlightAirFase {
 
         // B1870 _ 1660693394000 _ 1660701438000 _timePoint
         long startTime = 1631453855000L;
-        long endTime   =  1631461370000L; // startTime + 10 * 1000;
+        long endTime   =  startTime + 500 * 1000; // 1631461370000L;
         String planeNumber = "B30EQ";
 
         PlaneDetailResponse resp = queryHbase(startTime, endTime, zkUrl, zkPort, tableName, colFamily, planeNumber);
+
+        System.out.println("resp size: " + VM.current().sizeOf(resp));
+        System.out.println("resp-size: " + RamUsageEstimator.sizeOf(resp));
+
+        //FileUtil.addContentToFile("json.txt", JSON.toJSONString(resp), "E:\\");
+
+        MemoryMeter meter = new MemoryMeter();
+        System.out.println("meter 1: " + meter.measure(resp));
+        System.out.println("meter 2: " + meter.measureDeep(resp));
+
         logger.info("resp = {} - {} / {}", startTime, endTime, resp.getDetails().size());
         logger.info("FlightAirFase end");
     }
@@ -80,7 +96,10 @@ public class FlightAirFase {
             long time = HBaseUtils.bytes2ResolutionKey(r.getRow())._2;
             String key1 = HBaseUtils.bytes2ResolutionKey(r.getRow())._1;
             rows++;
-            System.out.println(time);
+            if (rows > 0 && rows % 500 == 0) {
+                System.out.println("progress " + rows);
+            }
+            //System.out.println(time);
 //            for (Cell cell : r.rawCells()) {
 //                String cf = Bytes.toString(CellUtil.cloneFamily(cell));
 //                logger.info("time = " + time + " key = " + key1 + " cf = " + cf);
@@ -197,7 +216,7 @@ public class FlightAirFase {
             return null;
         }
         GZIPInputStream gis = new GZIPInputStream(new ByteArrayInputStream(compressed));
-        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(gis, "utf-8"));
+        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(gis, StandardCharsets.UTF_8));
         // 使用指定的 charsetName，通过解码字节将缓冲区内容转换为字符串
         return bufferedReader.lines().collect(Collectors.joining());
     }
